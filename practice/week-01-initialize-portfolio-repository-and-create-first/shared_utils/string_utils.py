@@ -165,3 +165,66 @@ def snake_to_camel(name: str, capitalize_first: bool = False) -> str:
     first = components[0].capitalize() if capitalize_first else components[0].lower()
     rest = "".join(x.capitalize() for x in components[1:])
     return first + rest
+
+
+def mask_sensitive(
+    text: str,
+    visible_start: int = 0,
+    visible_end: int = 4,
+    mask_char: str = "*",
+) -> str:
+    """
+    Mask sensitive information in a string, preserving a specified number of
+    characters at the start and end. Useful for masking credit card numbers,
+    email prefixes, tokens, API keys, and phone numbers.
+
+    Parameters:
+        text (str): The input string containing sensitive data.
+        visible_start (int, optional): Number of characters to keep visible at the start.
+                                       Defaults to 0. Must be >= 0.
+        visible_end (int, optional): Number of characters to keep visible at the end.
+                                     Defaults to 4. Must be >= 0.
+        mask_char (str, optional): The masking character to replace hidden characters with.
+                                   Defaults to '*'. Must be a single character.
+
+    Returns:
+        str: The masked string.
+
+    Raises:
+        TypeError: If text is not a string, or if parameters have invalid types.
+        ValueError: If visible_start < 0, visible_end < 0, or mask_char is not a single character.
+
+    Examples:
+        >>> mask_sensitive("1234567812345678")
+        '************5678'
+        >>> mask_sensitive("user@example.com", visible_start=2, visible_end=4)
+        'us**********com'
+        >>> mask_sensitive("secret-token", visible_start=2, visible_end=2, mask_char="#")
+        'se########en'
+    """
+    if not isinstance(text, str):
+        raise TypeError(f"Expected str for 'text', got {type(text).__name__}")
+    if not isinstance(visible_start, int) or isinstance(visible_start, bool):
+        raise TypeError(f"Expected int for 'visible_start', got {type(visible_start).__name__}")
+    if not isinstance(visible_end, int) or isinstance(visible_end, bool):
+        raise TypeError(f"Expected int for 'visible_end', got {type(visible_end).__name__}")
+    if not isinstance(mask_char, str):
+        raise TypeError(f"Expected str for 'mask_char', got {type(mask_char).__name__}")
+
+    if visible_start < 0:
+        raise ValueError("visible_start must be non-negative")
+    if visible_end < 0:
+        raise ValueError("visible_end must be non-negative")
+    if len(mask_char) != 1:
+        raise ValueError("mask_char must be a single character")
+
+    total_len = len(text)
+    if total_len == 0:
+        return ""
+
+    if visible_start + visible_end >= total_len:
+        return text
+
+    mask_count = total_len - visible_start - visible_end
+    return text[:visible_start] + (mask_char * mask_count) + text[total_len - visible_end:]
+

@@ -10,6 +10,7 @@ from .string_utils import (
     truncate_words,
     camel_to_snake,
     snake_to_camel,
+    mask_sensitive,
 )
 
 __version__ = "0.1.0"
@@ -18,4 +19,6 @@ __all__ = [
     "truncate_words",
     "camel_to_snake",
     "snake_to_camel",
+    "mask_sensitive",
 ]
+

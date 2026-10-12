@@ -8,6 +8,7 @@ from shared_utils.string_utils import (
     truncate_words,
     camel_to_snake,
     snake_to_camel,
+    mask_sensitive,
 )
 
 
@@ -97,5 +98,68 @@ class TestSnakeToCamel(unittest.TestCase):
         self.assertEqual(snake_to_camel(""), "")
 
 
+class TestMaskSensitive(unittest.TestCase):
+    """Test suite for mask_sensitive utility function."""
+
+    def test_default_masking(self):
+        # Default: visible_start=0, visible_end=4, mask_char='*'
+        self.assertEqual(
+            mask_sensitive("1234567812345678"),
+            "************5678",
+        )
+        self.assertEqual(mask_sensitive("hello world"), "*******orld")
+
+    def test_custom_visible_counts(self):
+        self.assertEqual(
+            mask_sensitive("user@example.com", visible_start=2, visible_end=4),
+            "us**********com",
+        )
+        self.assertEqual(
+            mask_sensitive("ABCDEFGHIJ", visible_start=3, visible_end=2),
+            "ABC*****IJ",
+        )
+
+    def test_custom_mask_char(self):
+        self.assertEqual(
+            mask_sensitive("secret-token-key", visible_start=2, visible_end=2, mask_char="#"),
+            "se############ey",
+        )
+        self.assertEqual(
+            mask_sensitive("12345678", visible_start=1, visible_end=1, mask_char="X"),
+            "1XXXXXX8",
+        )
+
+    def test_visible_counts_exceeding_or_equal_length(self):
+        # When visible_start + visible_end >= text length, return string unchanged
+        self.assertEqual(mask_sensitive("short", visible_start=3, visible_end=3), "short")
+        self.assertEqual(mask_sensitive("exact", visible_start=2, visible_end=3), "exact")
+
+    def test_empty_string(self):
+        self.assertEqual(mask_sensitive(""), "")
+
+    def test_negative_counts_raise_error(self):
+        with self.assertRaises(ValueError):
+            mask_sensitive("test", visible_start=-1)
+        with self.assertRaises(ValueError):
+            mask_sensitive("test", visible_end=-1)
+
+    def test_invalid_mask_char_length_raises_error(self):
+        with self.assertRaises(ValueError):
+            mask_sensitive("test", mask_char="**")
+        with self.assertRaises(ValueError):
+            mask_sensitive("test", mask_char="")
+
+    def test_invalid_types_raise_error(self):
+        with self.assertRaises(TypeError):
+            mask_sensitive(12345)  # type: ignore
+        with self.assertRaises(TypeError):
+            mask_sensitive("test", visible_start=True)  # type: ignore (bool is int subclass)
+        with self.assertRaises(TypeError):
+            mask_sensitive("test", visible_end="four")  # type: ignore
+        with self.assertRaises(TypeError):
+            mask_sensitive("test", mask_char=123)  # type: ignore
+
+
 if __name__ == "__main__":
     unittest.main()
+
